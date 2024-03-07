@@ -2,8 +2,10 @@ import csv
 import sys
 import os
 import subprocess
+import tempfile
 
 from PyQt5.QtCore import QSize
+from barcode.writer import ImageWriter
 
 # Install PyQt5 if not installed
 try:
@@ -16,22 +18,40 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFi
 from PyQt5.QtGui import QPixmap, QIcon
 from math import ceil
 
-# Get the directory of the Python program
-program_directory = os.path.dirname(os.path.abspath(__file__))
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import Paragraph
+from PIL import Image as PILImage
+import io
+import barcode
+from barcode import EAN13
 
-# Construct the full path to the "error.jpg" picture
-error_picture_path = os.path.join(program_directory, "error.jpg")
+
+# # Example usage:
+# # Assuming you have an instance of EAN class named 'ean_instance'
+# generate_ticket_pdf(ean_instance, tickets_per_page=9)
 
 
 class EAN:
     def __init__(self):
         self.ean_codes = {}
 
+        # Get the directory of the Python program
+        self.program_directory = os.path.dirname(os.path.abspath(__file__))
+        # Construct the full path to the "error.jpg" picture
+        self.error_picture_path = os.path.join(self.program_directory, "error.jpg")
+
     def add_ean_code(self, ean_code, product, brand):
         if len(ean_code) == 13 and ean_code.isdigit():
             self.ean_codes[ean_code] = {"ean_code": ean_code, "product": product, "brand": brand,
-                                        "image_path": error_picture_path,
-                                        "model_path": error_picture_path}
+                                        "image_path": self.error_picture_path,
+                                        "model_path": self.error_picture_path}
             print(f"EAN code {ean_code} added successfully.")
         else:
             print("Invalid EAN code. It must be 13 digits.")
@@ -60,6 +80,166 @@ class EAN:
 
     def get_model_path(self, ean_code):
         return self.ean_codes[ean_code]["model_path"]
+
+
+import tempfile
+
+import tempfile
+from PIL import Image as PILImage
+
+import tempfile
+from PIL import Image as PILImage
+
+import tempfile
+from PIL import Image as PILImage
+
+import tempfile
+from PIL import Image as PILImage
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph
+import tempfile
+from barcode import EAN13
+from barcode.writer import ImageWriter
+
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph
+import tempfile
+from barcode import EAN13
+from barcode.writer import ImageWriter
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph
+import tempfile
+from barcode import EAN13
+from barcode.writer import ImageWriter
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph
+import tempfile
+from barcode import EAN13
+from barcode.writer import ImageWriter
+def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
+    c = canvas.Canvas(output_filename, pagesize=A4)
+
+    # Define label dimensions
+    label_width = 168  # in mm
+    label_height = 80  # in mm
+
+    # Define margins and spacing
+    left_margin = 10 * mm
+    bottom_margin = 1 * mm
+    horizontal_spacing = 1 * mm
+    vertical_spacing = 1 * mm
+
+    # Define border style
+    c.setDash(1, 2)
+
+    # Define styles
+    styles = getSampleStyleSheet()
+    style_center = ParagraphStyle(name='Center', parent=styles['Normal'], alignment=TA_CENTER, fontSize=7)
+
+    # Calculate the width and height available for tickets
+    available_width = A4[0] - 2 * left_margin
+    available_height = A4[1] - bottom_margin
+
+    # Calculate the number of rows and columns to fit all tickets
+    cols = 3
+    rows = min(ceil(duplicates / cols), int(available_height / (label_height + vertical_spacing)))
+
+    # Calculate the actual horizontal and vertical spacing between tickets
+    horizontal_spacing = (available_width - cols * label_width) / (cols - 1) if cols > 1 else 0
+    vertical_spacing = (available_height - rows * label_height) / (rows - 1) if rows > 1 else 0
+
+    # Generate the specified number of duplicates
+    for i in range(duplicates):
+        # Calculate label positions based on row and column indexes
+        col = i % cols
+        row = i // cols
+
+        x = left_margin + col * (label_width + horizontal_spacing)
+        y = A4[1] - (bottom_margin + row * (label_height + vertical_spacing))
+
+        # Draw dashed border for the label
+        c.rect(x, y, label_width, label_height)
+
+        # Calculate the position for the ticket within the label
+        ticket_width = label_width - 2 * mm
+        ticket_height = label_height - 2 * mm
+        ticket_x = x + 1 * mm
+        ticket_y = y + 1 * mm
+
+        # Calculate the position for the product picture
+        product_img_path = ean_instance['model_path']
+        product_img_width = ticket_height
+        product_img_height = ticket_height
+        product_img_x = ticket_x
+        product_img_y = ticket_y
+
+        # Draw product picture
+        c.drawImage(product_img_path, product_img_x, product_img_y, width=product_img_width, height=product_img_height)
+
+        # Calculate the position for the barcode
+        barcode_width = ticket_width - product_img_width
+        barcode_height = ticket_height / 1.75
+        barcode_x = product_img_x + product_img_width
+        barcode_y = ticket_y
+
+        # Generate barcode image
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_barcode_file:
+            ean = EAN13(ean_instance["ean_code"], writer=ImageWriter())
+            ean.write(temp_barcode_file.name)
+
+            # Draw barcode image
+            c.drawImage(temp_barcode_file.name, barcode_x, barcode_y, width=barcode_width, height=barcode_height)
+
+        # Calculate the position for the text elements (product name and brand name)
+        text_width = barcode_width
+        text_height = ticket_height / 4
+        text_x = barcode_x
+        text_y = product_img_y + ticket_height / 2
+
+        # Add brand name and product name
+        product_name = Paragraph(f"Product: {ean_instance['product']}", style_center)
+        brand_name = Paragraph(f"Brand: {ean_instance['brand']}", style_center)
+        product_name.wrapOn(c, text_width, text_height)
+        brand_name.wrapOn(c, text_width, text_height)
+        product_name.drawOn(c, text_x, text_y + 10)  # Adjusted position for product name
+        brand_name.drawOn(c, text_x, text_y)  # Adjusted position for brand name
+
+    c.save()
+    print(f"PDF generated successfully: {output_filename}")
+
+
+
+
 
 
 class MainWindow(QWidget):
@@ -99,24 +279,17 @@ class MainWindow(QWidget):
 
         self.ean_manager = EAN()
 
+    def generate_pdf_for_ean(self, ean_code):
+        ean_data = self.ean_manager.get_ean_codes().get(ean_code)
+        if ean_data:
+            pdf_filename = f"{ean_code}_ticket.pdf"
+            generate_tickets_pdf(ean_data, output_filename=pdf_filename)
+            print(f"PDF generated for EAN code '{ean_code}': {pdf_filename}")
+
     def import_csv(self):
         csv_file_path, _ = QFileDialog.getOpenFileName(self, "Select CSV file", filter="CSV Files (*.csv)")
         if csv_file_path:
             self.import_ean_from_csv(csv_file_path)
-
-    # def import_ean_from_csv(self, csv_file_path):
-    #     try:
-    #         with open(csv_file_path, newline='') as csvfile:
-    #             reader = csv.DictReader(csvfile, delimiter=';')
-    #             for row in reader:
-    #                 brand = row['brand']
-    #                 product = row['product']
-    #                 ean_code = row['ean_code']
-    #                 self.ean_manager.add_ean_code(ean_code, product, brand)
-    #     except FileNotFoundError:
-    #         print(f"CSV file '{csv_file_path}' not found.")
-    #     except Exception as e:
-    #         print(f"An error occurred: {e}")
 
     def import_ean_from_csv(self, csv_file_path):
         try:
@@ -187,6 +360,7 @@ class MainWindow(QWidget):
                 item.setIcon(QIcon(pixmap))
                 item.setText(ean_code)
                 self.list_widget_model.addItem(item)
+                self.generate_pdf_for_ean(ean_code)
             self.list_widget_model.setIconSize(QSize(150, 150))
 
     def clear_layout(self):

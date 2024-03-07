@@ -8,7 +8,22 @@ try:
 except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5"])
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QListWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QListWidget, QLineEdit
+
+
+class EAN:
+    def __init__(self):
+        self.ean_codes = set()
+
+    def add_ean_code(self, ean_code):
+        if len(ean_code) == 13 and ean_code.isdigit():
+            self.ean_codes.add(ean_code)
+            print(f"EAN code {ean_code} added successfully.")
+        else:
+            print("Invalid EAN code. It must be 13 digits.")
+
+    def get_ean_codes(self):
+        return list(self.ean_codes)
 
 
 class MainWindow(QWidget):
@@ -28,12 +43,18 @@ class MainWindow(QWidget):
 
         self.setLayout(self.layout)
 
+        self.ean_manager = EAN()
+
     def browse_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder_path:
-            image_files = [file for file in os.listdir(folder_path) if file.endswith(('jpg', 'jpeg', 'png', 'gif'))]
+            image_files = [os.path.splitext(file)[0] for file in os.listdir(folder_path) if
+                           file.endswith(('jpg', 'jpeg', 'png', 'gif'))]
             self.list_widget.clear()
             self.list_widget.addItems(image_files)
+
+            for image_file in image_files:
+                self.ean_manager.add_ean_code(image_file)
 
 
 if __name__ == "__main__":

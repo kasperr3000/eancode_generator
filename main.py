@@ -1,11 +1,9 @@
 import csv
-import sys
 import os
 import subprocess
-import tempfile
+import sys
 
 from PyQt5.QtCore import QSize
-from barcode.writer import ImageWriter
 
 # Install PyQt5 if not installed
 try:
@@ -14,23 +12,20 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5"])
 
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, \
-    QLabel, QGridLayout, QListWidgetItem, QListWidget, QHBoxLayout
+    QListWidgetItem, QListWidget, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QIcon
 from math import ceil
 
-from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.platypus import Image, Table, TableStyle
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Paragraph
-from PIL import Image as PILImage
-import io
-import barcode
+import tempfile
 from barcode import EAN13
+from barcode.writer import ImageWriter
 
 
 # # Example usage:
@@ -82,70 +77,6 @@ class EAN:
         return self.ean_codes[ean_code]["model_path"]
 
 
-import tempfile
-
-import tempfile
-from PIL import Image as PILImage
-
-import tempfile
-from PIL import Image as PILImage
-
-import tempfile
-from PIL import Image as PILImage
-
-import tempfile
-from PIL import Image as PILImage
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import Paragraph
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.pdfgen import canvas
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import Paragraph
-import tempfile
-from barcode import EAN13
-from barcode.writer import ImageWriter
-
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import Paragraph
-import tempfile
-from barcode import EAN13
-from barcode.writer import ImageWriter
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import Paragraph
-import tempfile
-from barcode import EAN13
-from barcode.writer import ImageWriter
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
-from reportlab.platypus import Paragraph
-import tempfile
-from barcode import EAN13
-from barcode.writer import ImageWriter
 def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
     c = canvas.Canvas(output_filename, pagesize=A4)
 

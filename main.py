@@ -2,15 +2,15 @@ import csv
 import os
 import subprocess
 import sys
+import tempfile
 
 # Install if not installed
 try:
     import PyQt5
     import reportlab
     import barcode
-    import tempfile
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5", "reportlab", "python-barcode", "tempfile"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5", "reportlab", "python-barcode"])
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, \

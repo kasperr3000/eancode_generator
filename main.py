@@ -8,12 +8,13 @@ try:
     import PyQt5
     import reportlab
     import barcode
+    import tempfile
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5", "reportlab", "python-barcode"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5", "reportlab", "python-barcode", "tempfile"])
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, \
-    QListWidgetItem, QListWidget, QHBoxLayout
+    QListWidgetItem, QListWidget, QHBoxLayout, QProgressBar
 from PyQt5.QtGui import QPixmap, QIcon
 from math import ceil
 
@@ -23,8 +24,6 @@ from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import Paragraph
-
-import tempfile
 
 from barcode import EAN13
 from barcode.writer import ImageWriter
@@ -180,18 +179,19 @@ class MainWindow(QWidget):
         self.btn_import_csv.clicked.connect(self.import_csv)
         self.layout_buttons.addWidget(self.btn_import_csv)
 
-        self.btn_browse_main = QPushButton("Browse EAN Folder")
-        self.btn_browse_main.clicked.connect(self.browse_main_folder)
-
         self.btn_browse_modelpicture = QPushButton("Browse Model Picture Folder")
         self.btn_browse_modelpicture.clicked.connect(self.browse_modelpicture_folder)
 
+        self.btn_generate_pdf = QPushButton("Generate PDF")
+        self.btn_generate_pdf.clicked.connect(self.generate_pdf)
+
         self.list_widget_main = QListWidget()
+        self.list_widget_main.setIconSize(QSize(150, 150))
 
         self.list_widget_model = QListWidget()
 
-        self.layout_buttons.addWidget(self.btn_browse_main)
         self.layout_buttons.addWidget(self.btn_browse_modelpicture)
+        self.layout_buttons.addWidget(self.btn_generate_pdf)
 
         self.layout_lists.addWidget(self.list_widget_main)
         self.layout_lists.addWidget(self.list_widget_model)
@@ -202,11 +202,33 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
 
         self.ean_manager = EAN()
+        self.ean_info = []  # To store information about each EAN code
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMaximum(100)
+        self.progress_bar.setTextVisible(False)
+        self.layout.addWidget(self.progress_bar)
 
-    def generate_pdf_for_ean(self, ean_code):
+        item_height = self.list_widget_main.iconSize().height()
+        self.list_widget_main.setStyleSheet(f"QListWidget::item {{ height: {item_height}px; }}")
+
+    def generate_pdf(self):
+        output_folder = QFileDialog.getExistingDirectory(self, "Select Output Folder")
+        if output_folder:
+            total_ean_codes = len(self.ean_manager.get_ean_codes())
+            current_progress = 0
+            for index, (ean_code, _) in enumerate(self.ean_manager.get_ean_codes().items(), 1):
+                self.generate_pdf_for_ean(ean_code, output_folder)
+                current_progress = int((index / total_ean_codes) * 100)
+                self.progress_bar.setValue(current_progress)
+                QApplication.processEvents()
+            self.progress_bar.setStyleSheet("QProgressBar::chunk { background-color: green; }")
+            self.progress_bar.setValue(100)
+            self.progress_bar.setFormat("Done!")
+
+    def generate_pdf_for_ean(self, ean_code, output_folder):
         ean_data = self.ean_manager.get_ean_codes().get(ean_code)
         if ean_data:
-            pdf_filename = f"{ean_code}_ticket.pdf"
+            pdf_filename = os.path.join(output_folder, f"{ean_code}_EAN_labels.pdf")
             generate_tickets_pdf(ean_data, output_filename=pdf_filename)
             print(f"PDF generated for EAN code '{ean_code}': {pdf_filename}")
 
@@ -218,53 +240,28 @@ class MainWindow(QWidget):
     def import_ean_from_csv(self, csv_file_path):
         try:
             with open(csv_file_path, newline='') as csvfile:
-                # Use csv.Sniffer to determine the format of the CSV file
                 sample = csvfile.read(1024)
                 dialect = csv.Sniffer().sniff(sample)
                 csvfile.seek(0)
 
-                # Use DictReader with the detected dialect to read the CSV file
                 reader = csv.DictReader(csvfile, delimiter=';', dialect=dialect)
 
-                # Extract the column names from the first row of the CSV file
-                column_names = reader.fieldnames
-
-                # Ensure column_names is not empty
-                if column_names:
-                    # Iterate through the rows and access the data using column names
+                if reader.fieldnames:
                     for row in reader:
-                        # Assuming the column names are dynamic and can vary
-                        # You can access each column dynamically
-                        brand = row[column_names[0]]
-                        product = row[column_names[1]]
-                        ean_code = row[column_names[2]]
+                        brand = row[reader.fieldnames[0]]
+                        product = row[reader.fieldnames[1]]
+                        ean_code = row[reader.fieldnames[2]]
                         self.ean_manager.add_ean_code(ean_code, product, brand)
+                        self.ean_info.append(f"EAN: {ean_code}, Product: {product}, Brand: {brand}")
+
+                    self.list_widget_main.clear()
+                    self.list_widget_main.addItems(self.ean_info)
                 else:
                     print("CSV file does not contain any headers.")
         except FileNotFoundError:
             print(f"CSV file '{csv_file_path}' not found.")
         except Exception as e:
             print(f"An error occurred: {e}")
-
-    def browse_main_folder(self):
-        folder_path = QFileDialog.getExistingDirectory(self, "Select EAN Picture Folder")
-        if folder_path:
-            self.list_widget_main.clear()
-            ean_files = [file for file in os.listdir(folder_path) if
-                         file.endswith(('jpg', 'jpeg', 'png', 'gif', 'tif', 'tiff'))]
-            for ean_code, rest in self.ean_manager.get_ean_codes().items():
-                for file in ean_files:
-                    if ean_code in file:
-                        image_path = os.path.join(folder_path, file)
-                        if os.path.exists(image_path):
-                            self.ean_manager.add_ean_image(ean_code, image_path)
-            for ean_code, rest in self.ean_manager.get_ean_codes().items():
-                pixmap = QPixmap(self.ean_manager.get_image_path(ean_code)).scaled(QSize(350, 150))
-                item = QListWidgetItem()
-                item.setIcon(QIcon(pixmap))
-                item.setText(ean_code)
-                self.list_widget_main.addItem(item)
-            self.list_widget_main.setIconSize(QSize(350, 150))
 
     def browse_modelpicture_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Model Picture Folder")
@@ -284,7 +281,6 @@ class MainWindow(QWidget):
                 item.setIcon(QIcon(pixmap))
                 item.setText(ean_code)
                 self.list_widget_model.addItem(item)
-                self.generate_pdf_for_ean(ean_code)
             self.list_widget_model.setIconSize(QSize(150, 150))
 
     def clear_layout(self):

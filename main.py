@@ -3,34 +3,31 @@ import os
 import subprocess
 import sys
 
-from PyQt5.QtCore import QSize
-
-# Install PyQt5 if not installed
+# Install if not installed
 try:
     import PyQt5
+    import reportlab
+    import barcode
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5", "reportlab", "python-barcode"])
 
+from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, \
     QListWidgetItem, QListWidget, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QIcon
 from math import ceil
 
 from reportlab.pdfgen import canvas
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import Paragraph
+
 import tempfile
+
 from barcode import EAN13
 from barcode.writer import ImageWriter
-
-
-# # Example usage:
-# # Assuming you have an instance of EAN class named 'ean_instance'
-# generate_ticket_pdf(ean_instance, tickets_per_page=9)
 
 
 class EAN:
@@ -77,7 +74,7 @@ class EAN:
         return self.ean_codes[ean_code]["model_path"]
 
 
-def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
+def generate_tickets_pdf(ean_instance, output_filename, duplicates=33):
     c = canvas.Canvas(output_filename, pagesize=A4)
 
     # Define label dimensions
@@ -85,10 +82,10 @@ def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
     label_height = 80  # in mm
 
     # Define margins and spacing
-    left_margin = 10 * mm
-    bottom_margin = 1 * mm
-    horizontal_spacing = 1 * mm
-    vertical_spacing = 1 * mm
+    left_margin = 5 * mm
+    bottom_margin = -1 * mm
+    horizontal_spacing = 5 * mm
+    vertical_spacing = 0 * mm
 
     # Define border style
     c.setDash(1, 2)
@@ -122,8 +119,8 @@ def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
         c.rect(x, y, label_width, label_height)
 
         # Calculate the position for the ticket within the label
-        ticket_width = label_width - 2 * mm
-        ticket_height = label_height - 2 * mm
+        ticket_width = label_width - 1 * mm
+        ticket_height = label_height - 1 * mm
         ticket_x = x + 1 * mm
         ticket_y = y + 1 * mm
 
@@ -167,10 +164,6 @@ def generate_tickets_pdf(ean_instance, output_filename, duplicates=27):
 
     c.save()
     print(f"PDF generated successfully: {output_filename}")
-
-
-
-
 
 
 class MainWindow(QWidget):

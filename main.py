@@ -93,11 +93,12 @@ class MainWindow(QWidget):
                 ean_code = os.path.splitext(image_file)[0]
                 image_path = os.path.join(folder_path, image_file)
                 self.ean_manager.add_ean_code(ean_code, image_path)
-                pixmap = QPixmap(image_path).scaledToWidth(150)
+                pixmap = QPixmap(image_path).scaled(QSize(350, 150))
                 item = QListWidgetItem()
                 item.setIcon(QIcon(pixmap))
                 item.setText(ean_code)
                 self.list_widget_main.addItem(item)
+            self.list_widget_main.setIconSize(QSize(350,150))
 
     def browse_modelpicture_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Model Picture Folder")
@@ -110,13 +111,14 @@ class MainWindow(QWidget):
                     if file.startswith(ean_code):
                         model_picture_path = os.path.join(folder_path, file)
                         if os.path.exists(model_picture_path):
-                            self.ean_manager.add_ean_model(ean_code,model_picture_path)
+                            self.ean_manager.add_ean_model(ean_code, model_picture_path)
             for ean_code, main_image_path in self.ean_manager.get_ean_codes().items():
-                    pixmap = QPixmap(self.ean_manager.get_model_path(ean_code)).scaledToWidth(150)
+                    pixmap = QPixmap(self.ean_manager.get_model_path(ean_code)).scaled(QSize(150, 150))
                     item = QListWidgetItem()
                     item.setIcon(QIcon(pixmap))
                     item.setText(ean_code)
                     self.list_widget_model.addItem(item)
+            self.list_widget_model.setIconSize(QSize(150, 150))
 
 
     def clear_layout(self):
